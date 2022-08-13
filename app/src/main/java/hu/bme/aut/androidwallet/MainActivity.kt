@@ -1,20 +1,48 @@
 package hu.bme.aut.androidwallet
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SmallTopAppBar
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
@@ -56,13 +84,16 @@ fun MainScreen(
                 actions = {
                     var isExpended by remember { mutableStateOf(false) }
                     IconButton(onClick = { isExpended = !isExpended }) {
-                        Icon(imageVector = Icons.Default.Menu, contentDescription = "Menu")
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = stringResource(R.string.more_options)
+                        )
                     }
                     DropdownMenu(
                         expanded = isExpended,
                         onDismissRequest = { isExpended = !isExpended }) {
                         DropdownMenuItem(
-                            text = { Text(text = "Delete all") },
+                            text = { Text(text = stringResource(R.string.delete_all)) },
                             onClick = { viewModel.transactions.clear() })
                     }
                 }
@@ -73,7 +104,12 @@ fun MainScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(it)
+                .padding(
+                    bottom = it.calculateBottomPadding(),
+                    top = it.calculateTopPadding(),
+                    start = 8.dp,
+                    end = 8.dp
+                )
         ) {
             TransactionAdder(snackbarHostState)
             TransactionList()
@@ -85,39 +121,40 @@ fun MainScreen(
 @Composable
 fun TransactionAdder(
     snackbarHostState: SnackbarHostState,
+    context: Context = LocalContext.current,
     viewModel: MainViewModel = viewModel()
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp)
     ) {
         var name by remember { mutableStateOf("") }
         var worth by remember { mutableStateOf("") }
-        Row {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                TextField(
-                    label = { Text("Transaction name") },
-                    modifier = Modifier
-                        .weight(2f),
-                    value = name,
-                    onValueChange = { name = it }
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TextField(
+                label = { Text(stringResource(R.string.transaction_name)) },
+                modifier = Modifier
+                    .weight(2f),
+                value = name,
+                onValueChange = { name = it }
+            )
+            TextField(
+                label = { Text(stringResource(R.string.cost)) },
+                modifier = Modifier
+                    .weight(1f),
+                value = worth,
+                onValueChange = { worth = it },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number
                 )
-                TextField(
-                    label = { Text("Cost") },
-                    modifier = Modifier
-                        .weight(1f),
-                    value = worth,
-                    onValueChange = { worth = it },
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Number
-                    )
-                )
-            }
+            )
             Text(
-                text = viewModel.currency
+                text = viewModel.currency,
+                style = MaterialTheme.typography.labelLarge
             )
         }
         Row(
@@ -133,7 +170,9 @@ fun TransactionAdder(
                     if (name.isEmpty() || worth.toDoubleOrNull() == null) {
                         coroutineScope.launch {
                             snackbarHostState.showSnackbar(
-                                message = "Please enter data on both fields!",
+                                message = context.getString(
+                                    R.string.please_enter_data_on_both_fields
+                                ),
                                 duration = SnackbarDuration.Short,
                             )
                         }
@@ -148,7 +187,7 @@ fun TransactionAdder(
                     }
                 }
             ) {
-                Text(text = "Save")
+                Text(text = stringResource(R.string.save))
             }
         }
     }
@@ -160,9 +199,9 @@ fun TransactionList(
 ) {
     LazyColumn(
         modifier = Modifier
-            .fillMaxSize()
-            .padding(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+            .fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        userScrollEnabled = true
     ) {
         val items = viewModel.transactions
         items(items) {
@@ -183,9 +222,13 @@ fun TransactionCard(
         ) {
             Image(
                 painter = painterResource(id = R.drawable.ic_launcher_background),
-                contentDescription = if (item.isExpense) "Expense" else "Income",
+                contentDescription = if (item.isExpense) {
+                    stringResource(R.string.expense)
+                } else {
+                    stringResource(R.string.income)
+                },
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.size(96.dp)
+                modifier = Modifier.size(84.dp)
             )
             Column(
                 modifier = Modifier.padding(8.dp)
