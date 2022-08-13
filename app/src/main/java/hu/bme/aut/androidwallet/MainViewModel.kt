@@ -11,8 +11,13 @@ class MainViewModel : ViewModel() {
         private set
     var transactions = mutableStateListOf(
         Transaction(
-            name = "DefaultItem",
-            worth = 0.0,
+            name = "Default Income",
+            worth = 1.0,
+            currency = currency
+        ),
+        Transaction(
+            name = "Default Expense",
+            worth = -1.0,
             currency = currency
         )
     )

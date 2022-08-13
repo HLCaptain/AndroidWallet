@@ -41,6 +41,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -220,15 +221,31 @@ fun TransactionCard(
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
+            val (painter, color) = if (item.isExpense) {
+//                Pair(
+//                    painterResource(R.drawable.ic_round_money_off_24),
+//                    MaterialTheme.colorScheme.error
+//                )
+                painterResource(R.drawable.ic_round_money_off_24) to
+                        MaterialTheme.colorScheme.error
+            } else {
+//                Pair(
+//                    painterResource(R.drawable.ic_round_attach_money_24),
+//                    MaterialTheme.colorScheme.primary
+//                )
+                painterResource(R.drawable.ic_round_attach_money_24) to
+                        MaterialTheme.colorScheme.primary
+            }
             Image(
-                painter = painterResource(id = R.drawable.ic_launcher_background),
+                painter = painter,
                 contentDescription = if (item.isExpense) {
                     stringResource(R.string.expense)
                 } else {
                     stringResource(R.string.income)
                 },
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.size(84.dp)
+                modifier = Modifier.size(84.dp),
+                colorFilter = ColorFilter.tint(color)
             )
             Column(
                 modifier = Modifier.padding(8.dp)
@@ -239,7 +256,8 @@ fun TransactionCard(
                 )
                 Text(
                     text = "${item.worth} ${item.currency}",
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = color
                 )
             }
         }
