@@ -4,6 +4,10 @@ import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -81,7 +85,7 @@ fun MainScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             SmallTopAppBar(
-                title = { Text(stringResource(id = R.string.app_name)) },
+                title = { Text(stringResource(R.string.app_name)) },
                 actions = {
                     var isExpended by remember { mutableStateOf(false) }
                     IconButton(onClick = { isExpended = !isExpended }) {
@@ -94,8 +98,13 @@ fun MainScreen(
                         expanded = isExpended,
                         onDismissRequest = { isExpended = !isExpended }) {
                         DropdownMenuItem(
-                            text = { Text(text = stringResource(R.string.delete_all)) },
-                            onClick = { viewModel.transactions.clear() })
+                            text = {
+                                Text(stringResource(R.string.delete_all))
+                            },
+                            onClick = {
+                                viewModel.transactions.clear()
+                                isExpended = !isExpended
+                            })
                     }
                 }
             )
@@ -126,8 +135,7 @@ fun TransactionAdder(
     viewModel: MainViewModel = viewModel()
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = Modifier.fillMaxWidth()
     ) {
         var name by remember { mutableStateOf("") }
         var worth by remember { mutableStateOf("") }
@@ -138,15 +146,13 @@ fun TransactionAdder(
         ) {
             TextField(
                 label = { Text(stringResource(R.string.transaction_name)) },
-                modifier = Modifier
-                    .weight(2f),
+                modifier = Modifier.weight(2f),
                 value = name,
                 onValueChange = { name = it }
             )
             TextField(
                 label = { Text(stringResource(R.string.cost)) },
-                modifier = Modifier
-                    .weight(1f),
+                modifier = Modifier.weight(1f),
                 value = worth,
                 onValueChange = { worth = it },
                 keyboardOptions = KeyboardOptions(
@@ -194,6 +200,7 @@ fun TransactionAdder(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TransactionList(
     viewModel: MainViewModel = viewModel()
@@ -206,7 +213,15 @@ fun TransactionList(
     ) {
         val items = viewModel.transactions
         items(items) {
-            TransactionCard(item = it)
+            AnimatedVisibility(
+                visible = items.contains(it),
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                Row(modifier = Modifier.animateItemPlacement()) {
+                    TransactionCard(item = it)
+                }
+            }
         }
     }
 }
@@ -222,17 +237,9 @@ fun TransactionCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             val (painter, color) = if (item.isExpense) {
-//                Pair(
-//                    painterResource(R.drawable.ic_round_money_off_24),
-//                    MaterialTheme.colorScheme.error
-//                )
                 painterResource(R.drawable.ic_round_money_off_24) to
                         MaterialTheme.colorScheme.error
             } else {
-//                Pair(
-//                    painterResource(R.drawable.ic_round_attach_money_24),
-//                    MaterialTheme.colorScheme.primary
-//                )
                 painterResource(R.drawable.ic_round_attach_money_24) to
                         MaterialTheme.colorScheme.primary
             }
@@ -244,7 +251,7 @@ fun TransactionCard(
                     stringResource(R.string.income)
                 },
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.size(84.dp),
+                modifier = Modifier.size(64.dp),
                 colorFilter = ColorFilter.tint(color)
             )
             Column(
@@ -252,7 +259,7 @@ fun TransactionCard(
             ) {
                 Text(
                     text = item.name,
-                    style = MaterialTheme.typography.displaySmall
+                    style = MaterialTheme.typography.headlineSmall
                 )
                 Text(
                     text = "${item.worth} ${item.currency}",
