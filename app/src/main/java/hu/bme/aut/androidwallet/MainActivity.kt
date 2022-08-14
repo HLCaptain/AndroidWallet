@@ -169,8 +169,15 @@ fun TransactionAdder(
                 space = 8.dp,
                 alignment = Alignment.End
             ),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
+            Text(
+                text = stringResource(R.string.summary) + ": " +
+                        viewModel.transactions.sumOf { it.worth } + " " +
+                        viewModel.currency,
+                style = MaterialTheme.typography.labelLarge
+            )
             val coroutineScope = rememberCoroutineScope()
             Button(
                 onClick = {

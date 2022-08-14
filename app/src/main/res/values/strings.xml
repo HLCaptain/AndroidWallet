@@ -9,4 +9,5 @@
     <string name="expense">Expense</string>
     <string name="income">Income</string>
     <string name="more_options">More options</string>
+    <string name="summary">Summary</string>
 </resources>
