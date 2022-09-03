@@ -9,6 +9,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -38,6 +39,7 @@ import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -46,6 +48,8 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldColors
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -58,11 +62,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -94,6 +101,8 @@ fun MainScreen(
         snackbarHost = {
             SnackbarHost(
                 modifier = Modifier
+                    // Paddings are useful, so that the snackbar
+                    // is always visible, ie. when the keyboard shown.
                     .imePadding()
                     .statusBarsPadding()
                     .navigationBarsPadding(),
@@ -102,41 +111,8 @@ fun MainScreen(
         },
         topBar = {
             SmallTopAppBar(
-                title = {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(MainPadding),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(text = stringResource(R.string.app_name))
-                        Icon(
-                            imageVector = Icons.Rounded.Wallet,
-                            contentDescription = stringResource(R.string.wallet_icon)
-                        )
-                    }
-                },
-                actions = {
-                    var isExpended by remember { mutableStateOf(false) }
-                    IconButton(onClick = { isExpended = !isExpended }) {
-                        Icon(
-                            imageVector = Icons.Default.MoreVert,
-                            contentDescription = stringResource(R.string.more_options)
-                        )
-                    }
-                    DropdownMenu(
-                        expanded = isExpended,
-                        onDismissRequest = { isExpended = !isExpended }
-                    ) {
-                        DropdownMenuItem(
-                            text = {
-                                Text(stringResource(R.string.delete_all))
-                            },
-                            onClick = {
-                                viewModel.transactions.clear()
-                                isExpended = !isExpended
-                            }
-                        )
-                    }
-                }
+                title = { WalletTitle() },
+                actions = { AppBarActionMenu(viewModel) }
             )
         },
         modifier = Modifier.fillMaxSize()
@@ -144,116 +120,126 @@ fun MainScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                // You should always use the paddings, Scaffold
+                // gives you in some way or another
                 .padding(
                     bottom = it.calculateBottomPadding(),
                     top = it.calculateTopPadding()
                 )
         ) {
-            TransactionAdder(snackbarHostState)
+            TransactionAdder(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = MainPadding),
+                snackbarHostState = snackbarHostState
+            )
             TransactionList()
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun WalletTitle() {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(MainPadding),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(text = stringResource(R.string.app_name))
+        Icon(
+            imageVector = Icons.Rounded.Wallet,
+            contentDescription = stringResource(R.string.wallet_icon)
+        )
+    }
+}
+
+@Composable
+fun AppBarActionMenu(
+    viewModel: MainViewModel = viewModel()
+) {
+    var isExpended by remember { mutableStateOf(false) }
+    IconButton(onClick = { isExpended = !isExpended }) {
+        Icon(
+            imageVector = Icons.Default.MoreVert,
+            contentDescription = stringResource(R.string.more_options)
+        )
+    }
+    DropdownMenu(
+        expanded = isExpended,
+        onDismissRequest = { isExpended = !isExpended }
+    ) {
+        DropdownMenuItem(
+            text = {
+                Text(stringResource(R.string.delete_all))
+            },
+            onClick = {
+                viewModel.transactions.clear()
+                isExpended = !isExpended
+            }
+        )
+    }
+}
+
 @Composable
 fun TransactionAdder(
+    modifier: Modifier = Modifier,
     snackbarHostState: SnackbarHostState,
     context: Context = LocalContext.current,
-    focusManager: FocusManager = LocalFocusManager.current,
     viewModel: MainViewModel = viewModel()
 ) {
     val coroutineScope = rememberCoroutineScope()
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = MainPadding),
+        modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(MainPadding)
     ) {
         var name by remember { mutableStateOf("") }
-        var wasNameValidated by remember { mutableStateOf(false) }
-        val isNameWrong = name.isBlank() && wasNameValidated
         var worth by remember { mutableStateOf("") }
+        var wasNameValidated by remember { mutableStateOf(false) }
         var wasWorthValidated by remember { mutableStateOf(false) }
+        val isNameWrong = name.isBlank() && wasNameValidated
         val isWorthWrong = worth.isBlank() && wasWorthValidated
         Row(
             horizontalArrangement = Arrangement.spacedBy(MainPadding),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            OutlinedTextField(
+            WalletTextField(
                 label = { Text(text = stringResource(R.string.transaction_name)) },
                 modifier = Modifier.weight(2f),
                 value = name,
                 onValueChange = { name = it },
-                singleLine = true,
                 isError = isNameWrong,
-                keyboardActions = KeyboardActions(
-                    onGo = {
-                        focusManager.clearFocus()
-                        viewModel.transactions.addTransactionWithValidation(
-                            context = context,
-                            coroutineScope = coroutineScope,
-                            name = name,
-                            worth = worth,
-                            currency = viewModel.currency,
-                            onNameValidated = { wasNameValidated = true },
-                            onWorthValidated = { wasWorthValidated = true },
-                            snackbarHostState = snackbarHostState
-                        )
-                    },
-                    onDone = {
-                        focusManager.clearFocus()
-                        viewModel.transactions.addTransactionWithValidation(
-                            context = context,
-                            coroutineScope = coroutineScope,
-                            name = name,
-                            worth = worth,
-                            currency = viewModel.currency,
-                            onNameValidated = { wasNameValidated = true },
-                            onWorthValidated = { wasWorthValidated = true },
-                            snackbarHostState = snackbarHostState
-                        )
-                    }
-                )
+                keyboardType = KeyboardType.Text,
+                onAddTransaction = {
+                    viewModel.transactions.addTransactionWithValidation(
+                        context = context,
+                        coroutineScope = coroutineScope,
+                        name = name,
+                        worth = worth,
+                        currency = viewModel.currency,
+                        onNameValidated = { wasNameValidated = true },
+                        onWorthValidated = { wasWorthValidated = true },
+                        snackbarHostState = snackbarHostState
+                    )
+                }
             )
-            OutlinedTextField(
+            WalletTextField(
                 label = { Text(text = stringResource(R.string.cost)) },
                 modifier = Modifier.weight(1f),
                 value = worth,
                 onValueChange = { worth = it },
-                singleLine = true,
                 isError = isWorthWrong,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Number
-                ),
-                keyboardActions = KeyboardActions(
-                    onGo = {
-                        focusManager.clearFocus()
-                        viewModel.transactions.addTransactionWithValidation(
-                            context = context,
-                            coroutineScope = coroutineScope,
-                            name = name,
-                            worth = worth,
-                            currency = viewModel.currency,
-                            onNameValidated = { wasNameValidated = true },
-                            onWorthValidated = { wasWorthValidated = true },
-                            snackbarHostState = snackbarHostState
-                        )
-                    },
-                    onDone = {
-                        focusManager.clearFocus()
-                        viewModel.transactions.addTransactionWithValidation(
-                            context = context,
-                            coroutineScope = coroutineScope,
-                            name = name,
-                            worth = worth,
-                            currency = viewModel.currency,
-                            onNameValidated = { wasNameValidated = true },
-                            onWorthValidated = { wasWorthValidated = true },
-                            snackbarHostState = snackbarHostState
-                        )
-                    }
-                )
+                keyboardType = KeyboardType.Number,
+                onAddTransaction = {
+                    viewModel.transactions.addTransactionWithValidation(
+                        context = context,
+                        coroutineScope = coroutineScope,
+                        name = name,
+                        worth = worth,
+                        currency = viewModel.currency,
+                        onNameValidated = { wasNameValidated = true },
+                        onWorthValidated = { wasWorthValidated = true },
+                        snackbarHostState = snackbarHostState
+                    )
+                }
             )
             Text(
                 modifier = Modifier.offset(y = 4.dp),
@@ -293,6 +279,64 @@ fun TransactionAdder(
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun WalletTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    readOnly: Boolean = false,
+    textStyle: TextStyle = LocalTextStyle.current,
+    label: @Composable (() -> Unit)? = null,
+    placeholder: @Composable (() -> Unit)? = null,
+    leadingIcon: @Composable (() -> Unit)? = null,
+    trailingIcon: @Composable (() -> Unit)? = null,
+    isError: Boolean = false,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
+    keyboardType: KeyboardType = KeyboardType.Text,
+    singleLine: Boolean = true,
+    maxLines: Int = Int.MAX_VALUE,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    shape: Shape = TextFieldDefaults.outlinedShape,
+    colors: TextFieldColors = TextFieldDefaults.outlinedTextFieldColors(),
+    focusManager: FocusManager = LocalFocusManager.current,
+    onAddTransaction: () -> Unit = {}
+) {
+    OutlinedTextField(
+        label = label,
+        modifier = modifier,
+        value = value,
+        onValueChange = onValueChange,
+        singleLine = singleLine,
+        isError = isError,
+        keyboardOptions = KeyboardOptions(
+            keyboardType = keyboardType
+        ),
+        keyboardActions = KeyboardActions(
+            onGo = {
+                focusManager.clearFocus()
+                onAddTransaction()
+            },
+            onDone = {
+                focusManager.clearFocus()
+                onAddTransaction()
+            }
+        ),
+        enabled = enabled,
+        interactionSource = interactionSource,
+        trailingIcon = trailingIcon,
+        colors = colors,
+        leadingIcon = leadingIcon,
+        maxLines = maxLines,
+        placeholder = placeholder,
+        textStyle = textStyle,
+        readOnly = readOnly,
+        shape = shape,
+        visualTransformation = visualTransformation
+    )
 }
 
 fun String.canBeDouble() = isNotBlank() && toDoubleOrNull() != null
@@ -384,7 +428,6 @@ fun TransactionList(
                 )
             ),
         verticalArrangement = Arrangement.spacedBy(MainPadding),
-        userScrollEnabled = true,
         contentPadding = PaddingValues(vertical = MainPadding)
     ) {
         val items = viewModel.transactions
@@ -395,7 +438,10 @@ fun TransactionList(
                 exit = fadeOut()
             ) {
                 Row(modifier = Modifier.animateItemPlacement()) {
-                    TransactionCard(item = it)
+                    TransactionCard(
+                        item = it,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             }
         }
@@ -404,10 +450,11 @@ fun TransactionList(
 
 @Composable
 fun TransactionCard(
+    modifier: Modifier = Modifier,
     item: Transaction
 ) {
     ElevatedCard(
-        modifier = Modifier.fillMaxWidth()
+        modifier = modifier
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically
