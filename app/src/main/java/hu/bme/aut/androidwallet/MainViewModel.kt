@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModel
 class MainViewModel : ViewModel() {
     var currency by mutableStateOf("HUF")
         private set
+
     var transactions = mutableStateListOf(
         Transaction(
             name = "Default Income",
@@ -21,4 +22,5 @@ class MainViewModel : ViewModel() {
             currency = currency
         )
     )
+        private set
 }
