@@ -99,8 +99,11 @@ dependencies {
 
 ## Lightspeed ☀ 💫 ✨ 🚀
 
+A példa megoldásom kinézete. Nektek nem feltétlenül kell így kinéznie, rátok bízom, hogyan
+jelenítitek meg az adatokat.
+
 <p align="center">
-<img alt="MainActivityLayout" src="assets/MainActivityLayout.png" width="40%"/>
+<img alt="MainActivity layout" src="assets/MainActivityLayout.png" width="40%"/>
 </p>
 
 A labor jelentős része meg van írva, viszont van néhány rész, amit a képzelőerőtökre szerettem
@@ -115,11 +118,8 @@ elemhez, akkor [ez a honlap][Equivalent of X in Compose] kisegíthet titeket.
 
 ### Keyboard kezelése ⌨
 
-<!---
-TODO: Ki kellene cserélni ezt a képet!
---->
 <p align="center">
-<img alt="MainActivityLayout" src="assets/MainActivityLayout.png" width="40%"/>
+<img alt="SnackBar shows correctly" src="assets/SnackBarShowsCorrectly.png" width="40%"/>
 </p>
 
 `Snackbar` így jelenne meg ideális esetben.
@@ -154,9 +154,82 @@ belsejét. Egyedileg testre tudjátok szabni, tudtok kísérletezni, hogy hogyan
 az `imageVector`-t és `color`-t felhasználó UI komponensek az `ElevatedCard`-on belül.
 A fenti kép ad egy példát, hogy mit kellene alkotni, hogyan nézhet ki egy végleges layout.
 Ezeknél a részeknél többnyire nincs rossz megoldás, csak legyenek megjelenítve az elvárt
-információk, mint a `Transaction` neve és értéke.
+információk, mint a `Transaction` neve (`name`) és értéke (`worth`).
 
-### ViewModel lifecycle
+## Határ a csillagos ég 🌉 🌃 🌌
+
+Egyelőre ezt a két (`PublicTransport` és `AndroidWallet`) labort írtam át [Jetpack Compose]ra,
+hogy példát mutassak, hogyan lehetne akár egy háziban felhasználni őket. Egy kicsi tréningnek
+szántam ezt a labort, hogy gyakoroljátok, miként is lehet UI-t írni XML nélkül. Remélem jó kis
+introduction projektek voltak ezek, lehet látni a különbséget és azt is, hogy sokkal nagyobb meló
+lenne XML-ben megvalósítani olyan funkcionalitást, amit Compose-ban néhány sor.
+
+## Néhány hasznos [Jetpack Compose] lib
+
+A labort néhány szerintem hasznos könyvtárral zárnám Compose-hoz, hogy minél több eszköz álljon
+rendelkezésetekre egy esetleges házi megírásához.
+
+### [Compose Destinations]
+
+[Navigation Component] szerintem nagyon jó ha az ember XML-t és Fragment-eket használ, azonban
+a Compose változatát elég nehéz használni. NavComponent használatáról a [Navigating with Compose]
+cikkben olvashattok. Mindenesetre van egy nagyon menő alternatívája, konkrétan egy wrapper a
+NavComponent köré, ez pedig nem más, mint a [Compose Destinations]. Destinations annotációkkal
+oldja meg a munka többségét, ami egy elég manuális munka lenne NavComponent esetén. Szerintem
+egy nagyon egyszerű és kényelmes megoldás a navigáció megoldására.
+
+### [Accompanist]
+
+A Google egyik könyvtára Compose-hoz, ami minden hasznos funkciót tartalmaz, amit a Compose még
+nem támogat natívan. Van benne animáció, permission kezelés, Flow layoutok, Swipe to refresh és
+még nagyon sok minden!
+
+### [Coil]
+
+Ha XML-t használtok, valószínűleg szó fog esni [Glide]ról. Mint ahogy a [Glide], ez is egy képeket
+betöltő és automatikusan cache-elő könyvtár, ami `Kotlin Coroutine`-okat használ egy nagyon
+`lightweight`, könnyű használni, van Compose implementációja is, míg [Glide] oldalán nem találok
+hivatalos információt, hogy lenne.
+
+### [Hilt with Compose]
+
+Az igazi programozó nem bízza a véletrenre, Unit teszteket ír és ennek egyik legjobb módja a
+Mock-olós tesztelés. Ehhez pedig kell a Dependency Injection. Szoftvertechnikák megvan ☺?
+TLDR: Könnyen DI-t megoldani [Hilt]tel lehet, szerencsére van Compose támogatása. A jövőben majd
+fogtok [MVVM] alapú architektúrával is dolgozni, ehhez pedig elengedhetetlen lesz a DI.
+[Hilt] és [Hilt with Compose] jelenleg sok támogatást kap Google-éktól, így bátran támogatom a
+hosszú távú használatát.
+
+### [Compose Material 3]
+
+Előző laborban nagy szerepet kapott, viszont a [Material Design 3] az Android design jövője, így
+kihagyhatatlan egy ilyen felsorolásból. Aki eddig nem használta, használja, sokkal szebb lesz az
+applikációtok, ami szerintem sokat számít!
+
+Ez ilyen
+
+<p align="center">
+<img alt="Material Design 2 fans vs Material Design 3 enjoyers" src="assets/Chad.png" width="40%"/>
+</p>
+
+dolog.
+
+Azért vannak hiányosságai [Material Design 3]-nak [Material Design 2]-vel szemben, de a Google
+az utóbbi időben elkezdett sok mindent átportolni [Compose Material 3]-ra és a régi UI elemeket
+Design 3-ra.
+
+## Jó, jut eszembe..
+
+A fenti [Compose Material 3] fejezet adott egy kis inspirációt.
+
+<p align="center">
+<img alt="Interop 💯 😌" src="assets/Interop.png" width="49%"/>
+<img alt="Beismerem, lehet egy picit elszállt velem a 🐎" src="assets/Me.png" width="49%"/>
+<img alt="Nem hiába volt az egyik első Android neve az, hogy Eclair" src="assets/Eclair.png" width="49%"/>
+<img alt="Köszi, hogy végigszenvedtétek ezt velem, próbáltam a maxot kihozni az egészből, sokat
+számít nekem nagyon hogy itt voltatok, tudom, néha cringe lehettem, meg nem mentem bele a végletekig
+dolgokba, de próbáltam egy hasznos, egyedibb, viccesebb, emészthetőbb anyagot kihozni az egészből." src="assets/Kutya.png" width="49%"/>
+</p>
 
 [Jetpack Compose]: https://developer.android.com/jetpack/compose
 
@@ -175,3 +248,25 @@ információk, mint a `Transaction` neve és értéke.
 [Google Icons]: https://fonts.google.com/icons
 
 [Equivalent of X in Compose]: https://www.jetpackcompose.app/What-is-the-equivalent-of-X-in-Jetpack-Compose
+
+[Compose Destinations]: https://composedestinations.rafaelcosta.xyz/
+
+[Navigation Component]: https://developer.android.com/guide/navigation
+
+[Navigating with Compose]: https://developer.android.com/jetpack/compose/navigation
+
+[Accompanist]: https://google.github.io/accompanist/
+
+[Coil]: https://coil-kt.github.io/coil/
+
+[Glide]: https://bumptech.github.io/glide/
+
+[Compose Material 3]: https://developer.android.com/jetpack/androidx/releases/compose-material3
+
+[Material Design 3]: https://m3.material.io/
+
+[Material Design 2]: https://material.io/
+
+[Hilt with Compose]: https://developer.android.com/jetpack/compose/libraries#hilt
+
+[Hilt]: https://dagger.dev/hilt/
