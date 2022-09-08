@@ -8,6 +8,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,8 +16,12 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -56,7 +61,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
@@ -95,8 +102,10 @@ fun MainScreen(
             SnackbarHost(
                 // Paddings are useful, so that the snackbar
                 // is always visible, ie. when the keyboard shown.
-                // TODO: insert padding from README.md
-                modifier = Modifier,
+                modifier = Modifier
+                    .imePadding()
+                    .statusBarsPadding()
+                    .navigationBarsPadding(),
                 hostState = snackbarHostState
             )
         },
@@ -212,8 +221,26 @@ fun TransactionAdder(
                     )
                 }
             )
-            // TODO: Put here the WalletTextField to input the transaction's worth.
-            //  The above implementation of WalletTextField is a good example.
+            WalletTextField(
+                label = { Text(text = stringResource(R.string.cost)) },
+                modifier = Modifier.weight(1f),
+                value = worth,
+                onValueChange = { worth = it },
+                isError = isWorthWrong,
+                keyboardType = KeyboardType.Number,
+                onAddTransaction = {
+                    viewModel.transactions.addTransactionWithValidation(
+                        context = context,
+                        coroutineScope = coroutineScope,
+                        name = name,
+                        worth = worth,
+                        currency = viewModel.currency,
+                        onNameValidated = { wasNameValidated = true },
+                        onWorthValidated = { wasWorthValidated = true },
+                        snackbarHostState = snackbarHostState
+                    )
+                }
+            )
             Text(
                 modifier = Modifier.offset(y = 4.dp),
                 text = viewModel.currency,
@@ -432,11 +459,38 @@ fun TransactionCard(
     ElevatedCard(
         modifier = modifier
     ) {
-        val (imageVector, color) = if (item.isExpense) {
-            Icons.Rounded.MoneyOff to MaterialTheme.colorScheme.error
-        } else {
-            Icons.Rounded.AttachMoney to MaterialTheme.colorScheme.primary
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val (imageVector, color) = if (item.isExpense) {
+                Icons.Rounded.MoneyOff to MaterialTheme.colorScheme.error
+            } else {
+                Icons.Rounded.AttachMoney to MaterialTheme.colorScheme.primary
+            }
+            Image(
+                imageVector = imageVector,
+                contentDescription = if (item.isExpense) {
+                    stringResource(R.string.expense)
+                } else {
+                    stringResource(R.string.income)
+                },
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.size(64.dp),
+                colorFilter = ColorFilter.tint(color)
+            )
+            Column(
+                modifier = Modifier.padding(8.dp)
+            ) {
+                Text(
+                    text = item.name,
+                    style = MaterialTheme.typography.headlineSmall
+                )
+                Text(
+                    text = "${item.worth} ${item.currency}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = color
+                )
+            }
         }
-        // TODO: create the content of the Card
     }
 }
